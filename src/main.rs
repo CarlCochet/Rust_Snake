@@ -30,6 +30,7 @@ struct Game {
     snake: Snake,
     fruit: Fruit,
     lastKey: Key,
+    score: u32,
 }
 impl Game {
     fn render(&mut self, arg: &RenderArgs) {
@@ -43,6 +44,25 @@ impl Game {
 
         self.snake.render(&mut self.gl, arg);
         self.fruit.render(&mut self.gl, arg);
+
+        let mut k = 0;
+        for i in 0..self.score {
+            
+            let square = graphics::rectangle::square(
+                ((i % SIZE_GRID) * SIZE_SQUARE) as f64, 
+                (k * SIZE_SQUARE) as f64, 
+                SIZE_SQUARE as f64);
+
+            if (i % SIZE_GRID) > SIZE_GRID - 2 {
+                k += 1;
+            }
+
+            self.gl.draw(arg.viewport(), |c, gl| {
+                let transform = c.transform;
+
+                graphics::rectangle([0.0, 0.0, 0.0, 0.1], square, transform, gl);
+            })
+        }
     }
 
     fn update(&mut self) {
@@ -61,6 +81,10 @@ impl Game {
         };
 
         self.snake.update();
+        if self.snake.refresh == true {
+            self.snake.refresh = false;
+            self.score = 0;
+        }
     }
 
     fn pressed(&mut self, btn: &Button) {
@@ -85,6 +109,7 @@ struct Snake {
     body: LinkedList<(i32, i32)>,
     dir: Direction,
     grow: bool,
+    refresh:bool,
 }
 impl Snake {
     fn render(&self, gl: &mut GlGraphics, args: &RenderArgs) {
@@ -137,6 +162,7 @@ impl Snake {
                     self.dir = Direction::Right;
                     self.grow = false;
                     new_head = (*self.body.front().expect("Snake has no body.")).clone();
+                    self.refresh = true;
                 }
             }
         }
@@ -151,12 +177,12 @@ impl Snake {
 }
 
 struct Fruit {
-    pos: (i32, i32)
+    pos: (i32, i32),
+    color: [f32; 4],
 }
 impl Fruit {
     fn render(&self, gl: &mut GlGraphics, args: &RenderArgs) {
         use graphics;
-        let RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 
         let square = graphics::rectangle::square(
             (self.pos.0 * SIZE_SQUARE as i32) as f64, 
@@ -166,13 +192,15 @@ impl Fruit {
         gl.draw(args.viewport(), |c, gl| {
             let transform = c.transform;
 
-            graphics::rectangle(RED, square, transform, gl);
+            graphics::rectangle(self.color, square, transform, gl);
         })
     }
 
     fn update(&mut self) {
-        self.pos.0 = rand::thread_rng().gen_range(0, SIZE_GRID as i32);
-        self.pos.1 = rand::thread_rng().gen_range(0, SIZE_GRID as i32);
+        let mut rng = rand::thread_rng();
+        self.pos.0 = rng.gen_range(0, SIZE_GRID as i32);
+        self.pos.1 = rng.gen_range(0, SIZE_GRID as i32);
+        self.color = [rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), 1.0];
     }
 }
 
@@ -191,9 +219,10 @@ fn main() {
 
     let mut game = Game {
         gl: GlGraphics::new(opengl),
-        snake: Snake {body: LinkedList::from_iter((vec![(0, 0), (0, 1)]).into_iter()), dir: Direction::Right, grow: false},
-        fruit: Fruit {pos: (SIZE_GRID as i32 / 2,  SIZE_GRID as i32 / 2)},
+        snake: Snake {body: LinkedList::from_iter((vec![(0, 0), (0, 1)]).into_iter()), dir: Direction::Right, grow: false, refresh: false},
+        fruit: Fruit {pos: (SIZE_GRID as i32 / 2,  SIZE_GRID as i32 / 2), color: [1.0, 0.0, 0.0, 1.0]},
         lastKey: Key::Right,
+        score: 50,
     };
     
     let mut events = Events::new(EventSettings::new()).ups(8);
@@ -215,6 +244,8 @@ fn main() {
         if game.snake.body.front().expect("No 0 index.").0 == game.fruit.pos.0 && game.snake.body.front().expect("No 1 index.").1 == game.fruit.pos.1 {
             game.fruit.update();
             game.snake.grow = true;
+            game.score += 1;
+            println!("{}", game.score);
         }
     }
 }
