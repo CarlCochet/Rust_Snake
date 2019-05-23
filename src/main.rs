@@ -132,10 +132,12 @@ impl Snake {
         let snake_clone = self.body.clone();
         for block in snake_clone.iter() {
             if block.0 == new_head.0 && block.1 == new_head.1 {
-                self.body = LinkedList::from_iter((vec![(0, 0), (0, 1)]).into_iter());
-                self.dir = Direction::Right;
-                self.grow = false;
-                new_head = (*self.body.front().expect("Snake has no body.")).clone();
+                if block.0 != self.body.back().expect("No back found.").0 || block.1 != self.body.back().expect("No back found.").1 {
+                    self.body = LinkedList::from_iter((vec![(0, 0), (0, 1)]).into_iter());
+                    self.dir = Direction::Right;
+                    self.grow = false;
+                    new_head = (*self.body.front().expect("Snake has no body.")).clone();
+                }
             }
         }
 
