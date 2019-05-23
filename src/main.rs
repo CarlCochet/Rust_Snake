@@ -222,7 +222,7 @@ fn main() {
         snake: Snake {body: LinkedList::from_iter((vec![(0, 0), (0, 1)]).into_iter()), dir: Direction::Right, grow: false, refresh: false},
         fruit: Fruit {pos: (SIZE_GRID as i32 / 2,  SIZE_GRID as i32 / 2), color: [1.0, 0.0, 0.0, 1.0]},
         lastKey: Key::Right,
-        score: 50,
+        score: 0,
     };
     
     let mut events = Events::new(EventSettings::new()).ups(8);
