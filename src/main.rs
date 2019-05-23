@@ -13,6 +13,10 @@ use std::collections::LinkedList;
 use std::iter::FromIterator;
 use rand::Rng;
 
+static SIZE_WINDOW: u32 = 800;
+static SIZE_SQUARE: u32 = 50;
+static SIZE_GRID: u32 = SIZE_WINDOW / SIZE_SQUARE;
+
 #[derive(Clone, PartialEq)]
 enum Direction {
     Right,
@@ -90,9 +94,9 @@ impl Snake {
 
         let squares: Vec<graphics::types::Rectangle> = self.body.iter().map(|&(x, y)| {
             graphics::rectangle::square(
-                (x * 50) as f64, 
-                (y * 50) as f64, 
-                50_f64)
+                (x * SIZE_SQUARE as i32) as f64, 
+                (y * SIZE_SQUARE as i32) as f64, 
+                SIZE_SQUARE as f64)
         })
         .collect();
         
@@ -114,15 +118,15 @@ impl Snake {
             Direction::Down => new_head.1 += 1,
         }
 
-        if new_head.0 > 15 {
+        if new_head.0 > SIZE_GRID as i32 - 1 {
             new_head.0 = 0;
         } else if new_head.0 < 0 {
-            new_head.0 = 15;
+            new_head.0 = SIZE_GRID as i32 - 1;
         }
-        if new_head.1 > 15 {
+        if new_head.1 > SIZE_GRID as i32 - 1 {
             new_head.1 = 0;
         } else if new_head.1 < 0 {
-            new_head.1 = 15;
+            new_head.1 = SIZE_GRID as i32 - 1;
         }
 
         let snake_clone = self.body.clone();
@@ -131,6 +135,7 @@ impl Snake {
                 self.body = LinkedList::from_iter((vec![(0, 0), (0, 1)]).into_iter());
                 self.dir = Direction::Right;
                 self.grow = false;
+                new_head = (*self.body.front().expect("Snake has no body.")).clone();
             }
         }
 
@@ -152,9 +157,9 @@ impl Fruit {
         let RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 
         let square = graphics::rectangle::square(
-            (self.pos.0 * 50) as f64, 
-            (self.pos.1 * 50) as f64, 
-            50_f64);
+            (self.pos.0 * SIZE_SQUARE as i32) as f64, 
+            (self.pos.1 * SIZE_SQUARE as i32) as f64, 
+            SIZE_SQUARE as f64);
 
         gl.draw(args.viewport(), |c, gl| {
             let transform = c.transform;
@@ -164,8 +169,8 @@ impl Fruit {
     }
 
     fn update(&mut self) {
-        self.pos.0 = rand::thread_rng().gen_range(0, 16);
-        self.pos.1 = rand::thread_rng().gen_range(0, 16);
+        self.pos.0 = rand::thread_rng().gen_range(0, SIZE_GRID as i32);
+        self.pos.1 = rand::thread_rng().gen_range(0, SIZE_GRID as i32);
     }
 }
 
@@ -175,7 +180,7 @@ fn main() {
 
     let mut window: GlutinWindow = WindowSettings::new(
             "Snake Game",
-            [800, 800]
+            [SIZE_WINDOW, SIZE_WINDOW]
         )
         .opengl(opengl)
         .exit_on_esc(true)
@@ -185,7 +190,7 @@ fn main() {
     let mut game = Game {
         gl: GlGraphics::new(opengl),
         snake: Snake {body: LinkedList::from_iter((vec![(0, 0), (0, 1)]).into_iter()), dir: Direction::Right, grow: false},
-        fruit: Fruit {pos: (7, 7)},
+        fruit: Fruit {pos: (SIZE_GRID as i32 / 2,  SIZE_GRID as i32 / 2)},
         lastKey: Key::Right,
     };
     
